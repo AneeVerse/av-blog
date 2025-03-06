@@ -36,6 +36,7 @@ export default function BlogGenerator() {
 
   const [generatedCode, setGeneratedCode] = useState('')
 
+  const [copyText, setCopyText] = useState('Copy Code')
   // Main Tiptap Editor
   const editor = useEditor({
     extensions: [StarterKit],
@@ -129,6 +130,21 @@ export const ${formData.id.replace(/[-]/g, '_')} = [
 ]`
 
     setGeneratedCode(code)
+  }
+
+  // Copy code to clipboard
+  const copyToClipboard = () => {
+  // Copy code to clipboard
+  const el = document.createElement('textarea')
+  el.value = generatedCode
+  document.body.appendChild(el)
+  el.select()
+  document.execCommand('copy')
+  document.body.removeChild(el)
+  setCopyText('Copied!')
+  setTimeout(() => setCopyText('Copy Code'), 3000)
+
+   
   }
 
   return (
@@ -333,6 +349,15 @@ export const ${formData.id.replace(/[-]/g, '_')} = [
           <pre className="text-sm text-gray-100">
             {generatedCode && <code>{generatedCode}</code>}
           </pre>
+          {/* Copy Button */}
+          {generatedCode && (
+            <button
+              onClick={copyToClipboard}
+              className="mt-4 cursor-pointer z-20 absolute top-0 right-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+             {copyText}
+            </button>
+          )}
         </div>
       </div>
     </div>
