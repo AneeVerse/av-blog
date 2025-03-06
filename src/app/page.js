@@ -1,38 +1,24 @@
 "use client"
-// pages/generator.js
 import { useState } from 'react'
-import { marked } from 'marked'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import HtmlToJsx from 'html-to-jsx-transform'
+import SectionEditor from '@/components/SectionEditor' // Import the new component
 
-// Markdown to JSX converter configuration
-const renderer = {
-  paragraph(text) {
-    return `<p>${text}</p>`
+// Predefined options
+const CATEGORIES = ["Design", "eBay", "E-Commerce", "SEO"]
+const AUTHORS = [
+  {
+    name: "Pushkar Dake",
+    role: "Chief Marketing Officer",
+    image: "/images/blog/author/pushkar.png",
   },
-  strong(text) {
-    return `<strong>${text}</strong>`
+  {
+    name: "Abhijit",
+    role: "UI/UX Designer",
+    image: "/images/blog/author/abhi.png",
   },
-  em(text) {
-    return `<em>${text}</em>`
-  },
-  heading(text, level) {
-    return `<h${level}>${text}</h${level}>`
-  },
-  list(body, ordered) {
-    return ordered ? `<ol>${body}</ol>` : `<ul>${body}</ul>`
-  },
-  listitem(text) {
-    return `<li>${text}</li>`
-  },
-  image(href, title, text) {
-    return `<img src="${href}" alt="${text}"${title ? ` title="${title}"` : ''} />`
-  }
-}
-
-marked.use({ renderer })
-
-const markdownToJSX = (markdown) => {
-  return marked.parse(markdown.trim())
-}
+]
 
 export default function BlogGenerator() {
   const [formData, setFormData] = useState({
@@ -42,11 +28,7 @@ export default function BlogGenerator() {
     category: '',
     date: '',
     timeToRead: '',
-    author: {
-      name: '',
-      role: '',
-      image: ''
-    },
+    author: AUTHORS[0],
     shortDescription: '',
     description: '',
     content: []
@@ -54,246 +36,304 @@ export default function BlogGenerator() {
 
   const [generatedCode, setGeneratedCode] = useState('')
 
+  // Main Tiptap Editor
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: formData.description,
+    onUpdate: ({ editor }) => {
+      setFormData(prev => ({ ...prev, description: editor.getHTML() }))
+    }
+  })
+
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  // Handle author selection
   const handleAuthorChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      author: { ...prev.author, [name]: value }
-    }))
+    const selectedAuthor = AUTHORS.find(a => a.name === e.target.value)
+    setFormData(prev => ({ ...prev, author: selectedAuthor }))
   }
 
-  const handleContentChange = (index, field, value) => {
-    const updatedContent = [...formData.content]
-    updatedContent[index][field] = value
-    setFormData(prev => ({ ...prev, content: updatedContent }))
-  }
-
-  const addContentItem = () => {
+  // Add content section
+  const addContentSection = () => {
     setFormData(prev => ({
       ...prev,
       content: [...prev.content, { title: '', type: 'text', srcUrl: '', description: '' }]
     }))
   }
 
-  const removeContentItem = (index) => {
-    const updatedContent = formData.content.filter((_, i) => i !== index)
+  // Remove content section
+  const removeContentSection = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      content: prev.content.filter((_, i) => i !== index)
+    }))
+  }
+
+  // Handle content section changes
+  const handleContentChange = (index, field, value) => {
+    const updatedContent = [...formData.content]
+    updatedContent[index][field] = value
     setFormData(prev => ({ ...prev, content: updatedContent }))
   }
 
+  // Convert HTML to JSX
+  const convertHtmlToJSX = (html) => {
+    try {
+      const converter = new HtmlToJsx()
+      return converter.convert(html)
+    } catch {
+      return html
+    }
+  }
+
+  // Generate final code
   const generateCode = () => {
-    const descriptionJSX = markdownToJSX(formData.description)
-    const formattedDescription = descriptionJSX.split('\n').map(line => `      ${line}`).join('\n')
-
+    const jsxDescription = convertHtmlToJSX(formData.description)
+    
     const contentCode = formData.content.map(item => {
-      const itemDescription = markdownToJSX(item.description)
-      const formattedItemDesc = itemDescription.split('\n').map(line => `          ${line}`).join('\n')
-      
-      return `      {
-        title: "${item.title}",
+      const itemDescription = convertHtmlToJSX(item.description)
+      return `{
+        title: "${item.title.replace(/"/g, '\\"')}",
         type: "${item.type}",
-        srcUrl: "${item.type !== 'text' ? item.srcUrl : ''}",
+        srcUrl: "${item.srcUrl}",
         description: (
-${formattedItemDesc}
+          ${itemDescription.split('\n').join('\n          ')}
         ),
-      },`
-    }).join('\n')
+      }`
+    }).join(',\n      ')
 
-    const code = `// data/blogs.js
+    const code = `// blogs.js
 export const ${formData.id.replace(/[-]/g, '_')} = [
   {
     id: "${formData.id}",
-    title: "${formData.title}",
+    title: "${formData.title.replace(/"/g, '\\"')}",
     thumbnail: "${formData.thumbnail}",
     category: "${formData.category}",
     date: "${formData.date}",
     timeToRead: "${formData.timeToRead}",
-    author: {
-      name: "${formData.author.name}",
-      role: "${formData.author.role}",
-      image: "${formData.author.image}"
-    },
-    shortDescription: "${formData.shortDescription}",
+    author: ${JSON.stringify(formData.author, null, 2).replace(/"([^"]+)":/g, '$1:')},
+    shortDescription: "${formData.shortDescription.replace(/"/g, '\\"')}",
     description: (
       <div>
-${formattedDescription}
+        ${jsxDescription.split('\n').join('\n        ')}
       </div>
     ),
     content: [
-${contentCode}
+      ${contentCode}
     ],
   },
-];`
+]`
 
     setGeneratedCode(code)
   }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold text-gray-900">Blog Template Generator</h1>
+      <div className="max-w-[1580px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Side - Form */}
+        <div className="bg-white p-8 rounded-lg shadow-lg space-y-8">
+          <h1 className="text-3xl font-bold text-gray-900">Blog Template Generator</h1>
 
-        <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
           {/* Basic Information */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Basic Information</h2>
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-800">Basic Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700">ID</label>
-                <input type="text" name="id" value={formData.id} onChange={handleInputChange} 
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Unique ID</label>
+                <input 
+                  type="text" 
+                  name="id" 
+                  value={formData.id} 
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Title</label>
-                <input type="text" name="title" value={formData.title} onChange={handleInputChange} 
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select 
+                  name="category" 
+                  value={formData.category} 
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Thumbnail Path</label>
-                <input type="text" name="thumbnail" value={formData.thumbnail} onChange={handleInputChange} 
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input 
+                  type="date" 
+                  name="date" 
+                  value={formData.date} 
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Category</label>
-                <input type="text" name="category" value={formData.category} onChange={handleInputChange} 
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Time to read</label>
+                <input 
+                  type="text" 
+                  name="timeToRead" 
+                  value={formData.timeToRead} 
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
             </div>
           </div>
 
           {/* Author Information */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Author Information</h2>
-            <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-800">Author Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <input type="text" name="name" value={formData.author.name} onChange={handleAuthorChange} 
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select Author</label>
+                <select 
+                  value={formData.author.name} 
+                  onChange={handleAuthorChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {AUTHORS.map(author => (
+                    <option key={author.name} value={author.name}>
+                      {author.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
-                <input type="text" name="role" value={formData.author.role} onChange={handleAuthorChange} 
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <input 
+                  type="text" 
+                  value={formData.author.role} 
+                  readOnly
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Image Path</label>
-                <input type="text" name="image" value={formData.author.image} onChange={handleAuthorChange} 
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Image Path</label>
+                <input 
+                  type="text" 
+                  value={formData.author.image} 
+                  readOnly
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                />
               </div>
             </div>
           </div>
 
-          {/* Short Description */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Short Description</h2>
+          {/* Content Editor */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-800">Content Editor</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Markdown Format</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
               <textarea
                 name="shortDescription"
                 value={formData.shortDescription}
                 onChange={handleInputChange}
                 rows="3"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="**Bold text** *Italic* [Link](url)"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-          </div>
 
-          {/* Main Description */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Main Description</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Markdown Editor</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows="8"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 font-mono text-sm"
-                placeholder={`## Heading\n**Bold text**\n- List item\n\n| Table | Example |\n|-------|---------|`}
-              />
-              <p className="mt-2 text-sm text-gray-500">
-                Markdown supported: # Headers, **bold**, *italic*, `code`, - lists, [links](), tables
-              </p>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Main Description</label>
+              <div className="border border-gray-300 rounded-lg p-4">
+                <EditorContent editor={editor} />
+              </div>
             </div>
           </div>
 
           {/* Content Sections */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Content Sections</h2>
-              <button onClick={addContentItem} type="button" 
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                Add Section
-              </button>
-            </div>
-            
-            {formData.content.map((item, index) => (
-              <div key={index} className="border-l-4 border-blue-500 pl-4 space-y-4">
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-800">Content Sections</h2>
+            <button 
+              onClick={addContentSection}
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Add Section
+            </button>
+
+            {formData.content.map((section, index) => (
+              <div key={index} className="border border-gray-300 rounded-lg p-6 space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Section {index + 1}</h3>
-                  <button onClick={() => removeContentItem(index)} type="button" 
-                    className="text-red-600 hover:text-red-900">Remove</button>
+                  <h3 className="text-xl font-semibold text-gray-800">Section {index + 1}</h3>
+                  <button
+                    onClick={() => removeContentSection(index)}
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    Remove Section
+                  </button>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Title</label>
-                    <input type="text" value={item.title} 
-                      onChange={(e) => handleContentChange(index, 'title', e.target.value)} 
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                    <input
+                      type="text"
+                      value={section.title}
+                      onChange={(e) => handleContentChange(index, 'title', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Type</label>
-                    <select value={item.type} 
-                      onChange={(e) => handleContentChange(index, 'type', e.target.value)} 
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <select
+                      value={section.type}
+                      onChange={(e) => handleContentChange(index, 'type', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="text">Text</option>
                       <option value="image">Image</option>
                       <option value="video">Video</option>
-                      <option value="text">Text</option>
                     </select>
                   </div>
                 </div>
 
-                {item.type !== 'text' && (
+                {section.type !== 'text' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Source URL</label>
-                    <input type="text" value={item.srcUrl} 
-                      onChange={(e) => handleContentChange(index, 'srcUrl', e.target.value)} 
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Source URL</label>
+                    <input
+                      type="text"
+                      value={section.srcUrl}
+                      onChange={(e) => handleContentChange(index, 'srcUrl', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Description (Markdown)</label>
-                  <textarea value={item.description} rows="4"
-                    onChange={(e) => handleContentChange(index, 'description', e.target.value)} 
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 font-mono text-sm" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <SectionEditor
+                    content={section.description}
+                    onUpdate={(html) => handleContentChange(index, 'description', html)}
+                  />
                 </div>
               </div>
             ))}
           </div>
 
           {/* Generate Button */}
-          <button onClick={generateCode} type="button" 
-            className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+          <button 
+            onClick={generateCode} 
+            className="w-full px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
             Generate Code
           </button>
         </div>
 
-        {/* Generated Code Preview */}
-        {generatedCode && (
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4">Generated Code</h2>
-            <pre className="bg-gray-800 text-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-              <code>{generatedCode}</code>
-            </pre>
-          </div>
-        )}
+        {/* Right Side - Generated Code Preview */}
+        <div className="sticky top-8 h-[calc(100vh-4rem)] bg-gray-800 p-6 rounded-lg shadow-lg overflow-y-auto">
+          <h2 className="text-2xl font-semibold text-white mb-6">Generated Code</h2>
+          <pre className="text-sm text-gray-100">
+            {generatedCode && <code>{generatedCode}</code>}
+          </pre>
+        </div>
       </div>
     </div>
   )
