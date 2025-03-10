@@ -151,14 +151,14 @@ export default function WorksGeneratorPage() {
         <div className="bg-white p-8 rounded-xl shadow-lg space-y-8">
           {/* Basic Details */}
           <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Works Details</h2>
+            <h2 className="text-xl font-semibold  border-b border-gray-200   pb-2">Works Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
                 <FaLink className="absolute left-3 top-[17px] text-gray-500" />
                 <input
                   value={worksData.slug}
                   onChange={(e) => handleInputChange('slug', e.target.value)}
-                  className="w-full pl-10 p-3 border rounded-lg"
+                  className="w-full pl-10 p-3 border border-gray-200 rounded-lg"
                   placeholder="Slug (e.g., webflow)"
                 />
                 {validationErrors.slug && <p className="text-red-500 text-sm">{validationErrors.slug}</p>}
@@ -170,7 +170,7 @@ export default function WorksGeneratorPage() {
                   type="text"
                   value={worksData.thumbnail}
                   onChange={(e) => handleInputChange('thumbnail', e.target.value)}
-                  className="w-full pl-10 p-3 border rounded-lg"
+                  className="w-full pl-10 p-3 border border-gray-200 rounded-lg"
                   placeholder="Thumbnail URL"
                 />
                 {validationErrors.thumbnail && <p className="text-red-500 text-sm">{validationErrors.thumbnail}</p>}
@@ -181,7 +181,7 @@ export default function WorksGeneratorPage() {
                 <input
                   value={worksData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
-                  className="w-full pl-10 p-3 border rounded-lg"
+                  className="w-full pl-10 p-3 border border-gray-200 rounded-lg"
                   placeholder="Title"
                 />
                 {validationErrors.title && <p className="text-red-500 text-sm">{validationErrors.title}</p>}
@@ -191,14 +191,14 @@ export default function WorksGeneratorPage() {
 
           {/* Meta Information */}
           <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">Meta Information</h2>
+            <h2 className="text-xl font-semibold  border-b border-gray-200   pb-2">Meta Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
                 <FaCalendarAlt className="absolute left-3 top-[17px] text-gray-500" />
                 <input
                   value={worksData.meta.year}
                   onChange={(e) => handleInputChange('meta.year', e.target.value)}
-                  className="w-full pl-10 p-3 border rounded-lg"
+                  className="w-full pl-10 p-3 border border-gray-200 rounded-lg"
                   placeholder="Year"
                 />
                 {validationErrors['meta.year'] && <p className="text-red-500 text-sm">{validationErrors['meta.year']}</p>}
@@ -209,7 +209,7 @@ export default function WorksGeneratorPage() {
                 <input
                   value={worksData.meta.industry}
                   onChange={(e) => handleInputChange('meta.industry', e.target.value)}
-                  className="w-full pl-10 p-3 border rounded-lg"
+                  className="w-full pl-10 p-3 border border-gray-200 rounded-lg"
                   placeholder="Industry"
                 />
                 {validationErrors['meta.industry'] && <p className="text-red-500 text-sm">{validationErrors['meta.industry']}</p>}
@@ -220,7 +220,7 @@ export default function WorksGeneratorPage() {
                 <input
                   value={worksData.meta.client}
                   onChange={(e) => handleInputChange('meta.client', e.target.value)}
-                  className="w-full pl-10 p-3 border rounded-lg"
+                  className="w-full pl-10 p-3 border border-gray-200 rounded-lg"
                   placeholder="Client Name"
                 />
                 {validationErrors['meta.client'] && <p className="text-red-500 text-sm">{validationErrors['meta.client']}</p>}
@@ -230,7 +230,7 @@ export default function WorksGeneratorPage() {
                 <input
                   value={worksData.meta.services.join(', ')}
                   onChange={(e) => handleArrayChange('meta.services', e.target.value)}
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full p-3 border border-gray-200 rounded-lg"
                   placeholder="Services (comma separated)"
                 />
                 {validationErrors['meta.services'] && <p className="text-red-500 text-sm">{validationErrors['meta.services']}</p>}
@@ -240,13 +240,13 @@ export default function WorksGeneratorPage() {
 
           {/* About Section */}
           <section className="space-y-4">
-            <h2 className="text-xl font-semibold border-b pb-2">About Section</h2>
+            <h2 className="text-xl font-semibold  border-b border-gray-200   pb-2">About Section</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
                 <input
                   value={worksData.about.title}
                   onChange={(e) => handleInputChange('about.title', e.target.value)}
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full p-3 border border-gray-200 rounded-lg"
                   placeholder="About Title"
                 />
                 {validationErrors['about.title'] && <p className="text-red-500 text-sm">{validationErrors['about.title']}</p>}
@@ -256,7 +256,7 @@ export default function WorksGeneratorPage() {
                 <textarea
                   value={worksData.about.description}
                   onChange={(e) => handleInputChange('about.description', e.target.value)}
-                  className="w-full p-3 border rounded-lg h-32"
+                  className="w-full p-3 border border-gray-200 rounded-lg h-32"
                   placeholder="About Description"
                 />
                 {validationErrors['about.description'] && <p className="text-red-500 text-sm">{validationErrors['about.description']}</p>}
@@ -268,7 +268,7 @@ export default function WorksGeneratorPage() {
                   type="text"
                   value={worksData.about.image}
                   onChange={(e) => handleInputChange('about.image', e.target.value)}
-                  className="w-full pl-10 p-3 border rounded-lg"
+                  className="w-full pl-10 p-3 border border-gray-200 rounded-lg"
                   placeholder="About Image URL"
                 />
                 {validationErrors['about.image'] && <p className="text-red-500 text-sm">{validationErrors['about.image']}</p>}
@@ -294,7 +294,7 @@ export default function WorksGeneratorPage() {
             </div>
 
             {worksData.sections.map((section, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-4 relative">
+              <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-4 relative">
                 <button
                   onClick={() => removeSection(index)}
                   className="absolute top-4 right-4 p-2 text-gray-500 hover:text-red-500"
@@ -310,7 +310,7 @@ export default function WorksGeneratorPage() {
                   <textarea
                     value={section.content}
                     onChange={(e) => updateSection(index, 'content', e.target.value)}
-                    className="w-full p-3 border rounded-lg h-32"
+                    className="w-full p-3 border border-gray-200 rounded-lg h-32"
                     placeholder="Text content"
                   />
                 )}
@@ -321,7 +321,7 @@ export default function WorksGeneratorPage() {
                       <textarea
                         value={section.description}
                         onChange={(e) => updateSection(index, 'description', e.target.value)}
-                        className="w-full p-3 border rounded-lg h-32"
+                        className="w-full p-3 border border-gray-200 rounded-lg h-32"
                         placeholder="Gallery description"
                       />
                     )}
@@ -329,7 +329,7 @@ export default function WorksGeneratorPage() {
                       type="text"
                       value={section.content.join(', ')}
                       onChange={(e) => updateSection(index, 'images', e.target.value)}
-                      className="w-full p-3 border rounded-lg"
+                      className="w-full p-3 border border-gray-200 rounded-lg"
                       placeholder="Image URLs (comma separated)"
                     />
                   </>
