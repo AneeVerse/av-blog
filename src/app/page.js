@@ -1,385 +1,229 @@
 "use client"
-import { useState } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import HtmlToJsx from 'html-to-jsx-transform'
-import SectionEditor from '@/components/SectionEditor' // Import the new component
+import RichTextEditor from '@/components/RichTextEditor'
+import { useState } from 'react';
+import { FaLink, FaUser, FaRegClock } from 'react-icons/fa';
+import { MdImage } from 'react-icons/md';
+import { IoMdArrowDropdown } from 'react-icons/io';
+import { AiOutlineCalendar, AiOutlineFileText } from 'react-icons/ai';
 
-// Predefined options
-const CATEGORIES = ["Design", "eBay", "E-Commerce", "SEO"]
-const AUTHORS = [
-  {
-    name: "Pushkar Dake",
-    role: "Chief Marketing Officer",
-    image: "/images/blog/author/pushkar.png",
-  },
-  {
-    name: "Abhijit",
-    role: "UI/UX Designer",
-    image: "/images/blog/author/abhi.png",
-  },
-]
-
-export default function BlogGenerator() {
-  const [formData, setFormData] = useState({
+export default function BlogEditorPage() {
+  const [content, setContent] = useState('');
+  const [date, setDate] = useState('');
+  const [blogData, setBlogData] = useState({
     id: '',
     title: '',
     thumbnail: '',
     category: '',
-    date: '',
     timeToRead: '',
-    author: AUTHORS[0],
+    author: '',
     shortDescription: '',
     description: '',
-    content: []
-  })
+    content: ''
+  });
+  const [generatedOutput, setGeneratedOutput] = useState(null);
 
-  const [generatedCode, setGeneratedCode] = useState('')
+  const categories = ["Design", "eBay", "E-Commerce", "SEO"];
+  const authors = [
+    {
+      name: "Pushkar Dake",
+      role: "Chief Marketing Officer",
+      image: "/images/blog/author/pushkar.png",
+    },
+    {
+      name: "Abhijit",
+      role: "UI/UX Designer",
+      image: "/images/blog/author/abhi.png",
+    },
+  ];
 
-  const [copyText, setCopyText] = useState('Copy Code')
-  // Main Tiptap Editor
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: formData.description,
-    onUpdate: ({ editor }) => {
-      setFormData(prev => ({ ...prev, description: editor.getHTML() }))
-    }
-  })
-
-  // Handle input changes
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  // Handle author selection
-  const handleAuthorChange = (e) => {
-    const selectedAuthor = AUTHORS.find(a => a.name === e.target.value)
-    setFormData(prev => ({ ...prev, author: selectedAuthor }))
-  }
-
-  // Add content section
-  const addContentSection = () => {
-    setFormData(prev => ({
+    const { name, value } = e.target;
+    setBlogData(prev => ({
       ...prev,
-      content: [...prev.content, { title: '', type: 'text', srcUrl: '', description: '' }]
-    }))
-  }
+      [name]: value
+    }));
+  };
 
-  // Remove content section
-  const removeContentSection = (index) => {
-    setFormData(prev => ({
+  const handleEditorChange = (newContent) => {
+    setContent(newContent);
+    setBlogData(prev => ({
       ...prev,
-      content: prev.content.filter((_, i) => i !== index)
-    }))
-  }
+      content: newContent
+    }));
+  };
 
-  // Handle content section changes
-  const handleContentChange = (index, field, value) => {
-    const updatedContent = [...formData.content]
-    updatedContent[index][field] = value
-    setFormData(prev => ({ ...prev, content: updatedContent }))
-  }
-
-  // Convert HTML to JSX
-  const convertHtmlToJSX = (html) => {
-    try {
-      const converter = new HtmlToJsx()
-      return converter.convert(html)
-    } catch {
-      return html
-    }
-  }
-
-  // Generate final code
-  const generateCode = () => {
-    const jsxDescription = convertHtmlToJSX(formData.description)
-    
-    const contentCode = formData.content.map(item => {
-      const itemDescription = convertHtmlToJSX(item.description)
-      return `{
-        title: "${item.title.replace(/"/g, '\\"')}",
-        type: "${item.type}",
-        srcUrl: "${item.srcUrl}",
-        description: (
-          ${itemDescription.split('\n').join('\n          ')}
-        ),
-      }`
-    }).join(',\n      ')
-
-    const code = `// blogs.js
-export const ${formData.id.replace(/[-]/g, '_')} = [
-  {
-    id: "${formData.id}",
-    title: "${formData.title.replace(/"/g, '\\"')}",
-    thumbnail: "${formData.thumbnail}",
-    category: "${formData.category}",
-    date: "${formData.date}",
-    timeToRead: "${formData.timeToRead}",
-    author: ${JSON.stringify(formData.author, null, 2).replace(/"([^"]+)":/g, '$1:')},
-    shortDescription: "${formData.shortDescription.replace(/"/g, '\\"')}",
-    description: (
-      <div>
-        ${jsxDescription.split('\n').join('\n        ')}
-      </div>
-    ),
-    content: [
-      ${contentCode}
-    ],
-  },
-]`
-
-    setGeneratedCode(code)
-  }
-
-  // Copy code to clipboard
-  const copyToClipboard = () => {
-  // Copy code to clipboard
-  const el = document.createElement('textarea')
-  el.value = generatedCode
-  document.body.appendChild(el)
-  el.select()
-  document.execCommand('copy')
-  document.body.removeChild(el)
-  setCopyText('Copied!')
-  setTimeout(() => setCopyText('Copy Code'), 3000)
-
-   
-  }
+  const generateOutput = () => {
+    const selectedAuthor = authors.find(author => author.name === blogData.author);
+    const output = {
+      id: blogData.id || "unique-blog-id",
+      title: blogData.title || "Your Blog Title Here",
+      thumbnail: blogData.thumbnail || "/path/to/thumbnail.avif",
+      category: blogData.category || "Your Category",
+      date: date || "DD MMM, YYYY",
+      timeToRead: blogData.timeToRead || "X min read",
+      author: selectedAuthor || {
+        name: "Author Name",
+        role: "Author Role",
+        image: "/path/to/author/image.avif"
+      },
+      shortDescription: blogData.shortDescription || "A brief summary of your blog post...",
+      description: blogData.description || "This is the main description of the blog.",
+      content: `<div>${content}</div>`
+    };
+    setGeneratedOutput(output);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-[1580px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Side - Form */}
-        <div className="bg-white p-8 rounded-lg shadow-lg space-y-8">
-          <h1 className="text-3xl font-bold text-gray-900">Blog Template Generator</h1>
+    <div className="bg-gray-50 min-h-screen p-8">
+      <div className="max-w-[1536px] mx-auto">
+        {/* Header */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">
+          Blog <span className="text-blue-600">Template Generator</span>
+        </h1>
 
-          {/* Basic Information */}
+        {/* Blog Data Form */}
+        <div className="bg-white shadow-xl rounded-xl p-8 grid md:grid-cols-2 gap-8">
+          {/* Left Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800">Basic Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unique ID</label>
-                <input 
-                  type="text" 
-                  name="id" 
-                  value={formData.id} 
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Blog Details</h2>
+            <div className="space-y-4">
+              <div className="relative">
+                <FaLink className="absolute left-3 top-3 text-gray-500" />
+                <input
+                  name="id"
+                  value={blogData.id}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="BLOG URL: how-to-improve-website-seo"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input 
-                  type="text" 
-                  name="title" 
-                  value={formData.title} 
+              <div className="relative">
+                <FaUser className="absolute left-3 top-3 text-gray-500" />
+                <input
+                  name="title"
+                  value={blogData.title}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="TITLE: How to improve website SEO"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">thumbnail</label>
-                <input 
-                  type="text" 
-                  name="thumbnail" 
-                  value={formData.thumbnail} 
+              <div className="relative">
+                <MdImage className="absolute left-3 top-3 text-gray-500" />
+                <input
+                  name="thumbnail"
+                  value={blogData.thumbnail}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Image link"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select 
-                  name="category" 
-                  value={formData.category} 
+              <div className="relative">
+                <select
+                  name="category"
+                  value={blogData.category}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 border border-gray-200 rounded-lg p-3 appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  <option value="">Select category</option>
+                  {categories.map((cat, index) => (
+                    <option key={index} value={cat}>{cat}</option>
                   ))}
                 </select>
+                <IoMdArrowDropdown className="absolute right-3 top-3 text-gray-500" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                <input 
-                  type="date" 
-                  name="date" 
-                  value={formData.date} 
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              <div className="relative">
+                <AiOutlineCalendar className="absolute left-3 top-3 text-gray-500" />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Time to read</label>
-                <input 
-                  type="text" 
-                  name="timeToRead" 
-                  value={formData.timeToRead} 
+              <div className="relative">
+                <FaRegClock className="absolute left-3 top-3 text-gray-500" />
+                <input
+                  name="timeToRead"
+                  value={blogData.timeToRead}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Time to read"
                 />
               </div>
             </div>
           </div>
 
-          {/* Author Information */}
+          {/* Right Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800">Author Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Author</label>
-                <select 
-                  value={formData.author.name} 
-                  onChange={handleAuthorChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Author & Description</h2>
+            <div className="space-y-4">
+              <div className="relative">
+                <select
+                  name="author"
+                  value={blogData.author}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 border border-gray-200 rounded-lg p-3 appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  {AUTHORS.map(author => (
-                    <option key={author.name} value={author.name}>
-                      {author.name}
-                    </option>
+                  <option value="">Select Author</option>
+                  {authors.map((author, index) => (
+                    <option key={index} value={author.name}>{author.name}</option>
                   ))}
                 </select>
+                <IoMdArrowDropdown className="absolute right-3 top-3 text-gray-500" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                <input 
-                  type="text" 
-                  value={formData.author.role} 
-                  readOnly
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+              <div className="relative">
+                <AiOutlineFileText className="absolute left-3 top-3 text-gray-500" />
+                <textarea
+                  name="shortDescription"
+                  value={blogData.shortDescription}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 border border-gray-200 rounded-lg p-3 h-24 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Short Description"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Image Path</label>
-                <input 
-                  type="text" 
-                  value={formData.author.image} 
-                  readOnly
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+              <div className="relative">
+                <AiOutlineFileText className="absolute left-3 top-3 text-gray-500" />
+                <textarea
+                  name="description"
+                  value={blogData.description}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 border border-gray-200 rounded-lg p-3 h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Main Description"
                 />
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Content Editor */}
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800">Content Editor</h2>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
-              <textarea
-                name="shortDescription"
-                value={formData.shortDescription}
-                onChange={handleInputChange}
-                rows="3"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+        {/* Rich Text Editor Section */}
+        <div className="mt-8 bg-white shadow-xl rounded-xl p-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Blog Content</h2>
+          <RichTextEditor
+            initialData={content}
+            onEditorChange={handleEditorChange}
+          />
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Main Description</label>
-              <div className="border border-gray-300 rounded-lg p-4">
-                <EditorContent editor={editor} />
-              </div>
-            </div>
-          </div>
-
-          {/* Content Sections */}
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800">Content Sections</h2>
-            <button 
-              onClick={addContentSection}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Add Section
-            </button>
-
-            {formData.content.map((section, index) => (
-              <div key={index} className="border border-gray-300 rounded-lg p-6 space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-semibold text-gray-800">Section {index + 1}</h3>
-                  <button
-                    onClick={() => removeContentSection(index)}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                  >
-                    Remove Section
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                    <input
-                      type="text"
-                      value={section.title}
-                      onChange={(e) => handleContentChange(index, 'title', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                    <select
-                      value={section.type}
-                      onChange={(e) => handleContentChange(index, 'type', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="text">Text</option>
-                      <option value="image">Image</option>
-                      <option value="video">Video</option>
-                    </select>
-                  </div>
-                </div>
-
-                {section.type !== 'text' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Source URL</label>
-                    <input
-                      type="text"
-                      value={section.srcUrl}
-                      onChange={(e) => handleContentChange(index, 'srcUrl', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <SectionEditor
-                    content={section.description}
-                    onUpdate={(html) => handleContentChange(index, 'description', html)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Generate Button */}
-          <button 
-            onClick={generateCode} 
-            className="w-full px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+        {/* Generate Output Button */}
+        <div className="mt-8">
+          <button
+            onClick={generateOutput}
+            className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Generate Code
+            Generate Output
           </button>
         </div>
 
-        {/* Right Side - Generated Code Preview */}
-        <div className="sticky top-8 h-[calc(100vh-4rem)] bg-gray-800 p-6 rounded-lg shadow-lg overflow-y-auto">
-          <h2 className="text-2xl font-semibold text-white mb-6">Generated Code</h2>
-          <pre className="text-sm text-gray-100">
-            {generatedCode && <code>{generatedCode}</code>}
-          </pre>
-          {/* Copy Button */}
-          {generatedCode && (
-            <button
-              onClick={copyToClipboard}
-              className="mt-4 cursor-pointer z-20 absolute top-0 right-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-             {copyText}
-            </button>
-          )}
-        </div>
+        {/* Generated Output Section */}
+        {generatedOutput && (
+          <div className="mt-8 bg-white shadow-xl rounded-xl p-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Generated Output</h2>
+            <pre className="bg-gray-100 p-6 rounded-lg overflow-x-auto">
+              <code className="text-sm text-gray-700">{JSON.stringify(generatedOutput, null, 2)}</code>
+            </pre>
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }

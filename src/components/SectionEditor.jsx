@@ -1,21 +1,21 @@
 "use client"
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
+import RichTextEditor from '@/components/RichTextEditor'
 
-const SectionEditor = ({ content, onUpdate }) => {
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: content,
-    onUpdate: ({ editor }) => {
-      onUpdate(editor.getHTML())
-    }
-  })
+export default function BlogEditorPage() {
+  const [content, setContent] = useState('')
 
   return (
-    <div className="border rounded-md p-2">
-      <EditorContent editor={editor} />
+    <div className="p-8 max-w-4xl mx-auto">
+      <h1 className="text-3xl mb-6">Blog Editor</h1>
+      <RichTextEditor 
+        initialData={content}
+        onEditorChange={(newContent) => setContent(newContent)}
+      />
+      
+      <div className="mt-8 p-4 bg-gray-100 rounded">
+        <h2 className="text-xl mb-4">HTML Preview:</h2>
+        <div dangerouslySetInnerHTML={{ __html: content }} />
+      </div>
     </div>
   )
 }
-
-export default SectionEditor
