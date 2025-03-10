@@ -156,12 +156,12 @@ export default function BlogEditorPage() {
     if (!generatedOutput) return;
 
     const code = `// data/blogs.js\n` +
-      `export const ${generateVariableName(generatedOutput.title)} = [\n` +
+      `export const ${generateVariableName(generatedOutput.title)} = \n` +
       JSON.stringify(generatedOutput, null, 2)
         .replace(/"([^"]+)":/g, '$1:')
         .replace(/^{\n/, '{\n')
         .replace(/\n}$/, '\n}') +
-      `\n];`;
+      `\n;`;
 
     navigator.clipboard.writeText(code).then(() => {
       setCopyText('Copied!');
@@ -358,12 +358,12 @@ export default function BlogEditorPage() {
               <pre className="bg-gray-50 p-6 rounded-lg overflow-x-auto text-sm relative">
                 <code>
                   {`// data/blogs.js\n`}
-                  {`export const ${generateVariableName(generatedOutput.title)} = [\n`}
+                  {`export const ${generateVariableName(generatedOutput.title)} = \n`}
                   {JSON.stringify(generatedOutput, null, 2)
                     .replace(/"([^"]+)":/g, '$1:')
                     .replace(/^{\n/, '{\n')
                     .replace(/\n}$/, '\n}')}
-                  {`\n];`}
+                  {`\n;`}
                 </code>
                 <button
                   onClick={copyToClipboard}
