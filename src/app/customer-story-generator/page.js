@@ -6,17 +6,22 @@ import { MdImage } from 'react-icons/md';
 import { IoMdArrowDropdown } from 'react-icons/io';
 import { AiOutlineCalendar, AiOutlineFileText } from 'react-icons/ai';
 
-export default function BlogEditorPage() {
+export default function CustomerStoryEditorPage() {
   const [content, setContent] = useState('');
   const [date, setDate] = useState('');
   const [showHtmlPreview, setShowHtmlPreview] = useState(false);
-  const [blogData, setBlogData] = useState({
+  const [storyData, setStoryData] = useState({
     id: '',
     title: '',
     thumbnail: '',
     category: '',
     timeToRead: '',
     author: '',
+    client: {
+      name: '',
+      industry: '',
+      logo: ''
+    },
     shortDescription: '',
     description: '',
     content: ''
@@ -25,37 +30,37 @@ export default function BlogEditorPage() {
   const [copyText, setCopyText] = useState('Copy Code');
   const [validationErrors, setValidationErrors] = useState({});
 
-  const categories = ["Design", "eBay", "E-Commerce", "SEO"];
+  const categories = ["Saas", "E-commerce", "Technology", "Marketing"];
   const authors = [
     {
-      name: "Pushkar Dake",
-      role: "Chief Marketing Officer",
-      image: "/images/blog/author/pushkar.png",
+      name: "John Smith",
+      role: "Head of Growth at XYZ Tech",
+      image: "/images/customer-stories/author/john-smith.png",
     },
     {
-      name: "Abhijit",
-      role: "UI/UX Designer",
-      image: "/images/blog/author/abhi.png",
+      name: "Jane Doe",
+      role: "Marketing Director at ABC Corp",
+      image: "/images/customer-stories/author/jane-doe.png",
     },
   ];
 
   // Automatically generate ID from title
   useEffect(() => {
-    const generatedId = blogData.title
+    const generatedId = storyData.title
       .toLowerCase()
       .replace(/[^a-zA-Z0-9 ]/g, '')
       .replace(/\s+/g, '-')
       .substring(0, 50);
       
-    setBlogData(prev => ({
+    setStoryData(prev => ({
       ...prev,
       id: generatedId
     }));
-  }, [blogData.title]);
+  }, [storyData.title]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setBlogData(prev => ({
+    setStoryData(prev => ({
       ...prev,
       [name]: value
     }));
@@ -66,12 +71,28 @@ export default function BlogEditorPage() {
     }));
   };
 
+  const handleClientInputChange = (e) => {
+    const { name, value } = e.target;
+    setStoryData(prev => ({
+      ...prev,
+      client: {
+        ...prev.client,
+        [name]: value
+      }
+    }));
+    // Clear validation error when user starts typing
+    setValidationErrors(prev => ({
+      ...prev,
+      [`client_${name}`]: ''
+    }));
+  };
+
   // Handle textarea input to remove new lines
   const handleTextareaChange = (e) => {
     const { name, value } = e.target;
     // Remove new lines from the input
     const sanitizedValue = value.replace(/\n/g, ' ');
-    setBlogData(prev => ({
+    setStoryData(prev => ({
       ...prev,
       [name]: sanitizedValue
     }));
@@ -84,7 +105,7 @@ export default function BlogEditorPage() {
 
   const handleEditorChange = (newContent) => {
     setContent(newContent);
-    setBlogData(prev => ({
+    setStoryData(prev => ({
       ...prev,
       content: newContent
     }));
@@ -98,14 +119,17 @@ export default function BlogEditorPage() {
   const validateForm = () => {
     const errors = {};
 
-    if (!blogData.title) errors.title = 'Title is required';
-    if (!blogData.thumbnail) errors.thumbnail = 'Thumbnail URL is required';
-    if (!blogData.category) errors.category = 'Category is required';
+    if (!storyData.title) errors.title = 'Title is required';
+    if (!storyData.thumbnail) errors.thumbnail = 'Thumbnail URL is required';
+    if (!storyData.category) errors.category = 'Category is required';
     if (!date) errors.date = 'Date is required';
-    if (!blogData.timeToRead) errors.timeToRead = 'Reading time is required';
-    if (!blogData.author) errors.author = 'Author is required';
-    if (!blogData.shortDescription) errors.shortDescription = 'Short description is required';
+    if (!storyData.timeToRead) errors.timeToRead = 'Reading time is required';
+    if (!storyData.author) errors.author = 'Author is required';
+    if (!storyData.shortDescription) errors.shortDescription = 'Short description is required';
     if (!content) errors.content = 'Content is required';
+    if (!storyData.client.name) errors.client_name = 'Client name is required';
+    if (!storyData.client.industry) errors.client_industry = 'Client industry is required';
+    if (!storyData.client.logo) errors.client_logo = 'Client logo URL is required';
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -115,7 +139,7 @@ export default function BlogEditorPage() {
     const isValid = validateForm();
     if (!isValid) return;
 
-    const selectedAuthor = authors.find(author => author.name === blogData.author);
+    const selectedAuthor = authors.find(author => author.name === storyData.author);
     const formattedDate = new Date(date).toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
@@ -123,20 +147,25 @@ export default function BlogEditorPage() {
     }).replace(/ /g, ' ');
 
     const output = {
-      id: blogData.id || "unique-blog-id",
-      title: blogData.title || "Your Blog Title Here",
-      thumbnail: blogData.thumbnail || "/path/to/thumbnail.avif",
-      category: blogData.category || "Your Category",
+      id: storyData.id || "unique-story-id",
+      title: storyData.title || "Your Story Title Here",
+      thumbnail: storyData.thumbnail || "/path/to/thumbnail.avif",
+      category: storyData.category || "Your Category",
       date: formattedDate || "DD MMM, YYYY",
-      timeToRead: blogData.timeToRead ? `${blogData.timeToRead} min read` : "X min read",
+      timeToRead: storyData.timeToRead ? `${storyData.timeToRead} min read` : "X min read",
       author: selectedAuthor || {
         name: "Author Name",
         role: "Author Role",
         image: "/path/to/author/image.avif"
       },
-      shortDescription: blogData.shortDescription || "",
-      description: blogData.description || "",
-      content: content || "<div>Your blog content goes here.</div>"
+      client: {
+        name: storyData.client.name || "Client Name",
+        industry: storyData.client.industry || "Client Industry",
+        logo: storyData.client.logo || "/path/to/client/logo.avif"
+      },
+      shortDescription: storyData.shortDescription || "",
+      description: storyData.description || "",
+      content: content || "<div>Your story content goes here.</div>"
     };
 
     setGeneratedOutput(output);
@@ -155,13 +184,13 @@ export default function BlogEditorPage() {
   const copyToClipboard = () => {
     if (!generatedOutput) return;
 
-    const code = `// data/blogs.js\n` +
-      `export const ${generateVariableName(generatedOutput.title)} = [\n` +
+    const code = `// data/customerStories.js\n` +
+      `export const ${generateVariableName(generatedOutput.title)} = {\n` +
       JSON.stringify(generatedOutput, null, 2)
         .replace(/"([^"]+)":/g, '$1:')
         .replace(/^{\n/, '{\n')
         .replace(/\n}$/, '\n}') +
-      `\n];`;
+      `\n};`;
 
     navigator.clipboard.writeText(code).then(() => {
       setCopyText('Copied!');
@@ -175,22 +204,22 @@ export default function BlogEditorPage() {
         {/* Header */}
         <div className="bg-white shadow-xl rounded-xl p-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            Blog <span className="text-blue-600">Template Generator</span>
+            Customer Story <span className="text-blue-600">Template Generator</span>
           </h1>
-          <p className="text-gray-600 mt-2">Create professional blog templates with dynamic content generation</p>
+          <p className="text-gray-600 mt-2">Create professional customer story templates with dynamic content generation</p>
         </div>
 
-        {/* Blog Data Form */}
+        {/* Story Data Form */}
         <div className="bg-white shadow-xl rounded-xl p-8 grid md:grid-cols-2 gap-8">
           {/* Left Section */}
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Blog Details</h2>
+            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Story Details</h2>
             <div className="space-y-4">
               <div className="relative">
                 <FaLink className="absolute left-3 top-[50%] translate-y-[-50%] text-gray-500" />
                 <input
                   name="id"
-                  value={blogData.id}
+                  value={storyData.id}
                   onChange={handleInputChange}
                   className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Auto-generated URL"
@@ -198,22 +227,22 @@ export default function BlogEditorPage() {
                 />
               </div>
               <div className="relative">
-                <FaUser className="absolute left-3 top-[17px] text-gray-500" />
+                <FaUser className="absolute left-3 top-[50%] translate-y-[-50%] text-gray-500" />
                 <input
                   name="title"
-                  value={blogData.title}
+                  value={storyData.title}
                   onChange={handleInputChange}
                   className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Blog Title"
+                  placeholder="Story Title"
                   required
                 />
                 {validationErrors.title && <p className="text-red-500 text-sm mt-1">{validationErrors.title}</p>}
               </div>
               <div className="relative">
-                <MdImage className="absolute left-3 top-[17px] text-gray-500" />
+                <MdImage className="absolute left-3 top-[50%] translate-y-[-50%] text-gray-500" />
                 <input
                   name="thumbnail"
-                  value={blogData.thumbnail}
+                  value={storyData.thumbnail}
                   onChange={handleInputChange}
                   className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Thumbnail Image URL"
@@ -225,7 +254,7 @@ export default function BlogEditorPage() {
                 <div className="relative">
                   <select
                     name="category"
-                    value={blogData.category}
+                    value={storyData.category}
                     onChange={handleInputChange}
                     className="w-full pl-10 border border-gray-200 rounded-lg p-3 appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
@@ -235,11 +264,11 @@ export default function BlogEditorPage() {
                       <option key={index} value={cat}>{cat}</option>
                     ))}
                   </select>
-                  <IoMdArrowDropdown className="absolute right-3 top-[17px] text-gray-500" />
+                  <IoMdArrowDropdown className="absolute right-3 top-[50%] translate-y-[-50%] text-gray-500" />
                   {validationErrors.category && <p className="text-red-500 text-sm mt-1">{validationErrors.category}</p>}
                 </div>
                 <div className="relative">
-                  <AiOutlineCalendar className="absolute left-3 top-[17px] text-gray-500" />
+                  <AiOutlineCalendar className="absolute left-3 top-[50%] translate-y-[-50%] text-gray-500" />
                   <input
                     type="date"
                     value={date}
@@ -260,7 +289,7 @@ export default function BlogEditorPage() {
               <div className="relative">
                 <select
                   name="author"
-                  value={blogData.author}
+                  value={storyData.author}
                   onChange={handleInputChange}
                   className="w-full pl-10 border border-gray-200 rounded-lg p-3 appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
@@ -270,14 +299,14 @@ export default function BlogEditorPage() {
                     <option key={index} value={author.name}>{author.name}</option>
                   ))}
                 </select>
-                <IoMdArrowDropdown className="absolute right-3 top-[17px] text-gray-500" />
+                <IoMdArrowDropdown className="absolute right-3 top-[50%] translate-y-[-50%] text-gray-500" />
                 {validationErrors.author && <p className="text-red-500 text-sm mt-1">{validationErrors.author}</p>}
               </div>
               <div className="relative">
-                <FaRegClock className="absolute left-3 top-[17px] text-gray-500" />
+                <FaRegClock className="absolute left-3 top-[50%] translate-y-[-50%] text-gray-500" />
                 <input
                   name="timeToRead"
-                  value={blogData.timeToRead}
+                  value={storyData.timeToRead}
                   onChange={handleInputChange}
                   className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Reading Time (minutes)"
@@ -290,7 +319,7 @@ export default function BlogEditorPage() {
                 <AiOutlineFileText className="absolute left-3 top-[17px] text-gray-500" />
                 <textarea
                   name="shortDescription"
-                  value={blogData.shortDescription}
+                  value={storyData.shortDescription}
                   onChange={handleTextareaChange}
                   className="w-full pl-10 border border-gray-200 rounded-lg p-3 h-24 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Short Description (Plain Text)"
@@ -303,7 +332,7 @@ export default function BlogEditorPage() {
                 <AiOutlineFileText className="absolute left-3 top-[17px] text-gray-500" />
                 <textarea
                   name="description"
-                  value={blogData.description}
+                  value={storyData.description}
                   onChange={handleTextareaChange}
                   className="w-full pl-10 border border-gray-200 rounded-lg p-3 h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Detailed Description (Plain Text)"
@@ -313,10 +342,53 @@ export default function BlogEditorPage() {
           </div>
         </div>
 
+        {/* Client Details Section */}
+        <div className="bg-white shadow-xl rounded-xl p-8 space-y-6">
+          <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Client Details</h2>
+          <div className="space-y-4">
+            <div className="relative">
+              <FaUser className="absolute left-3 top-[50%] translate-y-[-50%] text-gray-500" />
+              <input
+                name="name"
+                value={storyData.client.name}
+                onChange={handleClientInputChange}
+                className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Client Name"
+                required
+              />
+              {validationErrors.client_name && <p className="text-red-500 text-sm mt-1">{validationErrors.client_name}</p>}
+            </div>
+            <div className="relative">
+              <FaUser className="absolute left-3 top-[50%] translate-y-[-50%] text-gray-500" />
+              <input
+                name="industry"
+                value={storyData.client.industry}
+                onChange={handleClientInputChange}
+                className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Client Industry"
+                required
+              />
+              {validationErrors.client_industry && <p className="text-red-500 text-sm mt-1">{validationErrors.client_industry}</p>}
+            </div>
+            <div className="relative">
+              <MdImage className="absolute left-3 top-[50%] translate-y-[-50%] text-gray-500" />
+              <input
+                name="logo"
+                value={storyData.client.logo}
+                onChange={handleClientInputChange}
+                className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Client Logo URL"
+                required
+              />
+              {validationErrors.client_logo && <p className="text-red-500 text-sm mt-1">{validationErrors.client_logo}</p>}
+            </div>
+          </div>
+        </div>
+
         {/* Content Sections */}
         <div className="bg-white shadow-xl rounded-xl p-8 space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">Blog Content</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Story Content</h2>
             <button
               onClick={() => setShowHtmlPreview(!showHtmlPreview)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
@@ -349,7 +421,7 @@ export default function BlogEditorPage() {
             onClick={generateOutput}
             className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-semibold"
           >
-            Generate Blog Template
+            Generate Story Template
           </button>
 
           {generatedOutput && (
@@ -357,13 +429,13 @@ export default function BlogEditorPage() {
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Generated Output</h2>
               <pre className="bg-gray-50 p-6 rounded-lg overflow-x-auto text-sm relative">
                 <code>
-                  {`// data/blogs.js\n`}
-                  {`export const ${generateVariableName(generatedOutput.title)} = [\n`}
+                  {`// data/customerStories.js\n`}
+                  {`export const ${generateVariableName(generatedOutput.title)} = {\n`}
                   {JSON.stringify(generatedOutput, null, 2)
                     .replace(/"([^"]+)":/g, '$1:')
                     .replace(/^{\n/, '{\n')
                     .replace(/\n}$/, '\n}')}
-                  {`\n];`}
+                  {`\n};`}
                 </code>
                 <button
                   onClick={copyToClipboard}

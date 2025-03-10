@@ -1,2 +1,118 @@
 @import "tailwindcss";
 
+
+
+
+  /* Blog description Styling */
+
+  .description .highlight {
+    background: #e6ecd6;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    border-radius: 0.5rem;
+  }
+  .description h1 {
+    font-size: 2.25rem; /* 36px */
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    line-height: 1.4;
+  }
+  
+  .description h2 {
+    font-size: 1.75rem; /* 28px */
+    font-weight: bold;
+    margin-bottom: 1.25rem;
+    line-height: 1.4;
+  }
+
+  .description h3 {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 600;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+  }
+
+  .description h4 {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+  }
+  .description h5 {
+    font-size: 1.05rem; /* 20px */
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+
+  .description p {
+    font-size: 1rem; /* 16px */
+    margin-bottom: 16px;
+    line-height: 1.6;
+    /* margin-bottom: 40px; */
+  }
+.description  table {
+    width: 80%;
+    border-collapse: collapse;
+    background: white;
+    margin: 40px 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.description th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.description th {
+    background: #EBFAFE;
+    color: #073742;
+    text-transform: uppercase;
+}
+
+  .description ul {
+    list-style-type: disc;
+    padding-left: 1.5rem ;
+    margin-bottom: 1.5rem;
+  }
+
+  .description ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem ;
+    margin-bottom: 1.5rem;
+  }
+
+  .description li {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+  }
+
+  .description blockquote {
+    border-left: 4px solid #88D7F0; 
+    padding: 0.75rem 1.25rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    font-size: 1rem;
+    color: #333;
+    background: #f8f8f8;
+  }
+
+  .description strong {
+    font-weight: bold;
+  }
+
+  .description em {
+    font-style: italic;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .description h1 { font-size: 1.75rem; } /* 28px */
+    .description h2 { font-size: 1.5rem; } /* 24px */
+    .description h3 { font-size: 1.25rem; } /* 20px */
+    .description h4 { font-size: 1.125rem; } /* 18px */
+    .description p, .description li { font-size: 0.95rem; } /* 15px */
+  }
