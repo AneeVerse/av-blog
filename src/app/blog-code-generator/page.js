@@ -20,7 +20,19 @@ const convertHtmlToJsx = (html) => {
     return `style={{ ${jsxStyle} }}`;
   });
 
-  return jsxWithStyles
+  // Fix <oembed> tags (YouTube embeds)
+  const jsxWithOembed = jsxWithStyles.replace(
+    /<oembed url="([^"]+)"\s*\/>/g,
+    (match, url) => {
+      const videoId = url.match(/v=([^&]+)/)?.[1];
+      if (videoId) {
+        return `<iframe src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />`;
+      }
+      return match; // Fallback if URL is invalid
+    }
+  );
+
+  return jsxWithOembed
     .replace(/class=/g, 'className=')
     .replace(/(stroke|clip|fill|font|marker|stop|underline)-(\w+)/g, (_, prefix, suffix) => 
       `${prefix}${suffix[0].toUpperCase()}${suffix.slice(1)}`
@@ -28,7 +40,8 @@ const convertHtmlToJsx = (html) => {
     .replace(/<img([^>]+?)\/?>/g, '<img$1 />') // Fix self-closing with single slash
     .replace(/<br\s*\/?>/g, '<br />')
     .replace(/&nbsp;/g, ' ')
-    .replace(/<(\w+)([^>]*)>\s*<\/\1>/g, '<$1$2 />'); // Self-close empty tags
+    .replace(/<(\w+)([^>]*)>\s*<\/\1>/g, '<$1$2 />') // Self-close empty tags
+    .replace(/\\"/g, '"'); // Fix escaped quotes
 };
 
 export default function BlogEditorPage() {
