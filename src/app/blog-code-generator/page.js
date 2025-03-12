@@ -1,10 +1,35 @@
 "use client"
 import RichTextEditor from '@/components/RichTextEditor'
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FaLink, FaUser, FaRegClock, FaEye, FaCopy } from 'react-icons/fa';
 import { MdImage } from 'react-icons/md';
 import { IoMdArrowDropdown } from 'react-icons/io';
 import { AiOutlineCalendar, AiOutlineFileText } from 'react-icons/ai';
+
+// Enhanced HTML to JSX Converter
+const convertHtmlToJsx = (html) => {
+  // Convert style attributes to JSX format
+  const styleRegex = /style="([^"]*)"/g;
+  const jsxWithStyles = html.replace(styleRegex, (match, styleContent) => {
+    const stylePairs = styleContent.split(';').filter(pair => pair.trim());
+    const jsxStyle = stylePairs.map(pair => {
+      const [key, value] = pair.split(':').map(s => s.trim());
+      const camelCaseKey = key.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+      return `${camelCaseKey}: '${value}'`;
+    }).join(', ');
+    return `style={{ ${jsxStyle} }}`;
+  });
+
+  return jsxWithStyles
+    .replace(/class=/g, 'className=')
+    .replace(/(stroke|clip|fill|font|marker|stop|underline)-(\w+)/g, (_, prefix, suffix) => 
+      `${prefix}${suffix[0].toUpperCase()}${suffix.slice(1)}`
+    )
+    .replace(/<img([^>]+?)\/?>/g, '<img$1 />') // Fix self-closing with single slash
+    .replace(/<br\s*\/?>/g, '<br />')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<(\w+)([^>]*)>\s*<\/\1>/g, '<$1$2 />'); // Self-close empty tags
+};
 
 export default function BlogEditorPage() {
   const [content, setContent] = useState('');
@@ -39,19 +64,20 @@ export default function BlogEditorPage() {
     },
   ];
 
-  // Automatically generate ID from title
-  useEffect(() => {
-    const generatedId = blogData.title
+  // Automatically format URL (id) when typing
+  const handleIdChange = (e) => {
+    const { value } = e.target;
+    const formattedId = value
       .toLowerCase()
-      .replace(/[^a-zA-Z0-9 ]/g, '')
+      .replace(/[^a-zA-Z0-9-]/g, '')
       .replace(/\s+/g, '-')
       .substring(0, 50);
-      
+
     setBlogData(prev => ({
       ...prev,
-      id: generatedId
+      id: formattedId
     }));
-  }, [blogData.title]);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -59,23 +85,19 @@ export default function BlogEditorPage() {
       ...prev,
       [name]: value
     }));
-    // Clear validation error when user starts typing
     setValidationErrors(prev => ({
       ...prev,
       [name]: ''
     }));
   };
 
-  // Handle textarea input to remove new lines
   const handleTextareaChange = (e) => {
     const { name, value } = e.target;
-    // Remove new lines from the input
     const sanitizedValue = value.replace(/\n/g, ' ');
     setBlogData(prev => ({
       ...prev,
       [name]: sanitizedValue
     }));
-    // Clear validation error when user starts typing
     setValidationErrors(prev => ({
       ...prev,
       [name]: ''
@@ -88,7 +110,6 @@ export default function BlogEditorPage() {
       ...prev,
       content: newContent
     }));
-    // Clear validation error when user starts typing
     setValidationErrors(prev => ({
       ...prev,
       content: ''
@@ -122,6 +143,9 @@ export default function BlogEditorPage() {
       year: 'numeric'
     }).replace(/ /g, ' ');
 
+    // Convert HTML to JSX
+    const jsxContent = convertHtmlToJsx(content);
+
     const output = {
       id: blogData.id || "unique-blog-id",
       title: blogData.title || "Your Blog Title Here",
@@ -136,34 +160,49 @@ export default function BlogEditorPage() {
       },
       shortDescription: blogData.shortDescription || "",
       description: blogData.description || "",
-      content: content || "<div>Your blog content goes here.</div>"
+      content: jsxContent
     };
 
     setGeneratedOutput(output);
   };
 
-  // Generate variable name from title
-  const generateVariableName = (title) => {
-    return title
+  const generateVariableName = (id) => {
+    return id
       .toLowerCase()
-      .replace(/[^a-zA-Z0-9 ]/g, '')
-      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9-]/g, '')
+      .replace(/-/g, '_')
       .substring(0, 30);
   };
 
-  // Copy code to clipboard
   const copyToClipboard = () => {
     if (!generatedOutput) return;
 
-    const code = `// data/blogs.js\n` +
-      `export const ${generateVariableName(generatedOutput.title)} = \n` +
-      JSON.stringify(generatedOutput, null, 2)
-        .replace(/"([^"]+)":/g, '$1:')
-        .replace(/^{\n/, '{\n')
-        .replace(/\n}$/, '\n}') +
-      `\n;`;
+    const outputCode = `// data/blogs.js
+export const ${generateVariableName(generatedOutput.id)} = {
+  id: "${generatedOutput.id}",
+  title: "${generatedOutput.title}",
+  thumbnail: "${generatedOutput.thumbnail}",
+  category: "${generatedOutput.category}",
+  date: "${generatedOutput.date}",
+  timeToRead: "${generatedOutput.timeToRead}",
+  author: {
+    name: "${generatedOutput.author.name}",
+    role: "${generatedOutput.author.role}",
+    image: "${generatedOutput.author.image}"
+  },
+  shortDescription: "${generatedOutput.shortDescription}",
+  description: "${generatedOutput.description}",
+  content: (
+    <div className="prose max-w-none">
+      ${convertHtmlToJsx(generatedOutput.content)
+        .split('\n')
+        .map(line => `      ${line}`)
+        .join('\n')}
+    </div>
+  )
+};`;
 
-    navigator.clipboard.writeText(code).then(() => {
+    navigator.clipboard.writeText(outputCode).then(() => {
       setCopyText('Copied!');
       setTimeout(() => setCopyText('Copy Code'), 3000);
     });
@@ -191,10 +230,9 @@ export default function BlogEditorPage() {
                 <input
                   name="id"
                   value={blogData.id}
-                  onChange={handleInputChange}
+                  onChange={handleIdChange}
                   className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Auto-generated URL"
-                  readOnly
+                  placeholder="Enter URL (e.g., my-blog-post)"
                 />
               </div>
               <div className="relative">
@@ -298,7 +336,6 @@ export default function BlogEditorPage() {
                 />
                 {validationErrors.shortDescription && <p className="text-red-500 text-sm mt-1">{validationErrors.shortDescription}</p>}
               </div>
-              {/* Description Field */}
               <div className="relative">
                 <AiOutlineFileText className="absolute left-3 top-[17px] text-gray-500" />
                 <textarea
@@ -325,7 +362,7 @@ export default function BlogEditorPage() {
               {showHtmlPreview ? 'Hide Preview' : 'Show Preview'}
             </button>
           </div>
-          
+
           <RichTextEditor
             initialData={content}
             onEditorChange={handleEditorChange}
@@ -335,9 +372,9 @@ export default function BlogEditorPage() {
           {showHtmlPreview && (
             <div className="mt-6 border-t pt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Content Preview</h3>
-              <div 
+              <div
                 className="prose max-w-none description border border-gray-200 p-6 rounded-lg"
-                dangerouslySetInnerHTML={{ __html: content }} 
+                dangerouslySetInnerHTML={{ __html: content }}
               />
             </div>
           )}
@@ -358,12 +395,28 @@ export default function BlogEditorPage() {
               <pre className="bg-gray-50 p-6 rounded-lg overflow-x-auto text-sm relative">
                 <code>
                   {`// data/blogs.js\n`}
-                  {`export const ${generateVariableName(generatedOutput.title)} = \n`}
-                  {JSON.stringify(generatedOutput, null, 2)
-                    .replace(/"([^"]+)":/g, '$1:')
-                    .replace(/^{\n/, '{\n')
-                    .replace(/\n}$/, '\n}')}
-                  {`\n;`}
+                  {`export const ${generateVariableName(generatedOutput.id)} = {\n`}
+                  {`  id: "${generatedOutput.id}",\n`}
+                  {`  title: "${generatedOutput.title}",\n`}
+                  {`  thumbnail: "${generatedOutput.thumbnail}",\n`}
+                  {`  category: "${generatedOutput.category}",\n`}
+                  {`  date: "${generatedOutput.date}",\n`}
+                  {`  timeToRead: "${generatedOutput.timeToRead}",\n`}
+                  {`  author: {\n`}
+                  {`    name: "${generatedOutput.author.name}",\n`}
+                  {`    role: "${generatedOutput.author.role}",\n`}
+                  {`    image: "${generatedOutput.author.image}"\n`}
+                  {`  },\n`}
+                  {`  shortDescription: "${generatedOutput.shortDescription}",\n`}
+                  {`  description: "${generatedOutput.description}",\n`}
+                  {`  content: (\n`}
+                  {`    <div className="prose max-w-none">\n`}
+                  {convertHtmlToJsx(generatedOutput.content).split('\n').map((line, i) => (
+                    `      ${line}\n`
+                  ))}
+                  {`    </div>\n`}
+                  {`  )\n`}
+                  {`};`}
                 </code>
                 <button
                   onClick={copyToClipboard}

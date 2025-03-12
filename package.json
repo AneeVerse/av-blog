@@ -16,6 +16,7 @@
     "@tiptap/react": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
     "framer-motion": "^12.4.11",
+    "html-react-parser": "^5.2.2",
     "html-to-jsx-transform": "^1.2.0",
     "marked": "^15.0.7",
     "next": "15.2.1",

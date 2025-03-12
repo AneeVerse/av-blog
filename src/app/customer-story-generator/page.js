@@ -44,19 +44,21 @@ export default function CustomerStoryEditorPage() {
     },
   ];
 
-  // Automatically generate ID from title
-  useEffect(() => {
-    const generatedId = storyData.title
+  // Automatically format URL (id) when typing
+  const handleIdChange = (e) => {
+    const { value } = e.target;
+    // Allow hyphens and alphanumeric characters
+    const formattedId = value
       .toLowerCase()
-      .replace(/[^a-zA-Z0-9 ]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 50);
-      
+      .replace(/[^a-zA-Z0-9-]/g, '') // Allow only alphanumeric and hyphens
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .substring(0, 50); // Limit length
+
     setStoryData(prev => ({
       ...prev,
-      id: generatedId
+      id: formattedId
     }));
-  }, [storyData.title]);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -146,6 +148,9 @@ export default function CustomerStoryEditorPage() {
       year: 'numeric'
     }).replace(/ /g, ' ');
 
+    // Wrap content in div without quotes
+    const wrappedContent = `<div>${content}</div>`;
+
     const output = {
       id: storyData.id || "unique-story-id",
       title: storyData.title || "Your Story Title Here",
@@ -165,34 +170,50 @@ export default function CustomerStoryEditorPage() {
       },
       shortDescription: storyData.shortDescription || "",
       description: storyData.description || "",
-      content: content || "<div>Your story content goes here.</div>"
+      content: wrappedContent // Use unquoted content here
     };
 
     setGeneratedOutput(output);
   };
 
-  // Generate variable name from title
-  const generateVariableName = (title) => {
-    return title
+  // Generate variable name from URL (replace hyphens with underscores)
+  const generateVariableName = (id) => {
+    return id
       .toLowerCase()
-      .replace(/[^a-zA-Z0-9 ]/g, '')
-      .replace(/\s+/g, '_')
-      .substring(0, 30);
+      .replace(/[^a-zA-Z0-9-]/g, '') // Allow only alphanumeric and hyphens
+      .replace(/-/g, '_') // Replace hyphens with underscores
+      .substring(0, 30); // Limit length
   };
 
   // Copy code to clipboard
   const copyToClipboard = () => {
     if (!generatedOutput) return;
 
-    const code = `// data/customerStories.js\n` +
-      `export const ${generateVariableName(generatedOutput.title)} = {\n` +
-      JSON.stringify(generatedOutput, null, 2)
-        .replace(/"([^"]+)":/g, '$1:')
-        .replace(/^{\n/, '{\n')
-        .replace(/\n}$/, '\n}') +
-      `\n};`;
+    // Manually format the output to remove quotes from content
+    const outputCode = `// data/customerStories.js
+export const ${generateVariableName(generatedOutput.id)} = {
+  id: "${generatedOutput.id}",
+  title: "${generatedOutput.title}",
+  thumbnail: "${generatedOutput.thumbnail}",
+  category: "${generatedOutput.category}",
+  date: "${generatedOutput.date}",
+  timeToRead: "${generatedOutput.timeToRead}",
+  author: {
+    name: "${generatedOutput.author.name}",
+    role: "${generatedOutput.author.role}",
+    image: "${generatedOutput.author.image}"
+  },
+  client: {
+    name: "${generatedOutput.client.name}",
+    industry: "${generatedOutput.client.industry}",
+    logo: "${generatedOutput.client.logo}"
+  },
+  shortDescription: "${generatedOutput.shortDescription}",
+  description: "${generatedOutput.description}",
+  content: ${generatedOutput.content}
+};`;
 
-    navigator.clipboard.writeText(code).then(() => {
+    navigator.clipboard.writeText(outputCode).then(() => {
       setCopyText('Copied!');
       setTimeout(() => setCopyText('Copy Code'), 3000);
     });
@@ -220,10 +241,9 @@ export default function CustomerStoryEditorPage() {
                 <input
                   name="id"
                   value={storyData.id}
-                  onChange={handleInputChange}
+                  onChange={handleIdChange} // Use handleIdChange for URL input
                   className="w-full pl-10 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Auto-generated URL"
-                  readOnly
+                  placeholder="Enter URL (e.g., my-story)"
                 />
               </div>
               <div className="relative">
@@ -397,7 +417,7 @@ export default function CustomerStoryEditorPage() {
               {showHtmlPreview ? 'Hide Preview' : 'Show Preview'}
             </button>
           </div>
-          
+
           <RichTextEditor
             initialData={content}
             onEditorChange={handleEditorChange}
@@ -407,9 +427,9 @@ export default function CustomerStoryEditorPage() {
           {showHtmlPreview && (
             <div className="mt-6 border-t pt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Content Preview</h3>
-              <div 
+              <div
                 className="prose max-w-none description border border-gray-200 p-6 rounded-lg"
-                dangerouslySetInnerHTML={{ __html: content }} 
+                dangerouslySetInnerHTML={{ __html: content }}
               />
             </div>
           )}
@@ -430,12 +450,27 @@ export default function CustomerStoryEditorPage() {
               <pre className="bg-gray-50 p-6 rounded-lg overflow-x-auto text-sm relative">
                 <code>
                   {`// data/customerStories.js\n`}
-                  {`export const ${generateVariableName(generatedOutput.title)} = {\n`}
-                  {JSON.stringify(generatedOutput, null, 2)
-                    .replace(/"([^"]+)":/g, '$1:')
-                    .replace(/^{\n/, '{\n')
-                    .replace(/\n}$/, '\n}')}
-                  {`\n};`}
+                  {`export const ${generateVariableName(generatedOutput.id)} = {\n`}
+                  {`  id: "${generatedOutput.id}",\n`}
+                  {`  title: "${generatedOutput.title}",\n`}
+                  {`  thumbnail: "${generatedOutput.thumbnail}",\n`}
+                  {`  category: "${generatedOutput.category}",\n`}
+                  {`  date: "${generatedOutput.date}",\n`}
+                  {`  timeToRead: "${generatedOutput.timeToRead}",\n`}
+                  {`  author: {\n`}
+                  {`    name: "${generatedOutput.author.name}",\n`}
+                  {`    role: "${generatedOutput.author.role}",\n`}
+                  {`    image: "${generatedOutput.author.image}"\n`}
+                  {`  },\n`}
+                  {`  client: {\n`}
+                  {`    name: "${generatedOutput.client.name}",\n`}
+                  {`    industry: "${generatedOutput.client.industry}",\n`}
+                  {`    logo: "${generatedOutput.client.logo}"\n`}
+                  {`  },\n`}
+                  {`  shortDescription: "${generatedOutput.shortDescription}",\n`}
+                  {`  description: "${generatedOutput.description}",\n`}
+                  {`  content: ${generatedOutput.content}\n`}
+                  {`};`}
                 </code>
                 <button
                   onClick={copyToClipboard}
